@@ -91,6 +91,7 @@ class KMeans:
 
         n = mat.shape[0]
         self.m = mat.shape[1]
+        self.fit_mat = mat
 
         #-------------------------assignment generation-------------------------
 
@@ -205,6 +206,17 @@ class KMeans:
         """
 
     def get_error(self) -> float:
+
+        total_sme = 0
+
+        for x, e in enumerate(self.fit_mat):
+            # calculate the distance from the data point to each [new] centroid
+            centroid_dists = [np.linalg.norm(e - k) for k in self.cluster_centers]
+            # set the assignments variable in the column corresponding to that cluster to 1
+            total_sme += min(centroid_dists)
+
+        return total_sme/self.fit_mat.shape[0]
+
         """
         Returns the final squared-mean error of the fit model. You can either do this by storing the
         original dataset or recording it following the end of model fitting.
@@ -228,13 +240,13 @@ class KMeans:
 def clustering_test():
     import utils
     cl_in = utils.make_clusters(seed = 0)
-    print(type(cl_in[1]))
     km = KMeans(3, .5, 90)
 
     km.fit(cl_in[0])
 
     centroids = km.get_centroids()
     ncentroids = centroids.shape[0]
+    print(f"SME = {km.get_error()}")
 
     predlabels = km.predict(cl_in[0])
 

@@ -12,6 +12,7 @@ class KMeans:
 
         #store the cluster centers found by fit()
         self.cluster_centers = []
+        self.m = 0
 
 
         """
@@ -31,24 +32,34 @@ class KMeans:
                 the maximum number of iterations before quitting model fit
         """
 
-    def fit(self, mat: np.ndarray):
+    def _inspect_matrix(self, mat: np.ndarray):
 
-        #-------------------------input inspection-------------------------
-
-        #verify correct input type/structure
-        if type(mat) != np.ndarray:  #isinstance(mat, np.ndarray): #isinstance does not work
+        #check input type
+        if type(mat) != np.ndarray:  # isinstance(mat, np.ndarray): #isinstance does not work
             raise ValueError("Input must be a numpy array.")
 
+        #check matrix dimensionality
         if len(mat.shape) != 2:
-            raise ValueError(f"input matrix had {len(mat.shape)} dimensions.\n Input must be a 2D matrix where the rows are observations and columns are features")
+            raise ValueError(
+                f"input matrix had {len(mat.shape)} dimensions.\n Input must be a 2D matrix where the rows are observations and columns are features")
 
+        #check for sufficient number of observations
         if mat.shape[0] < self.k:
-            raise ValueError("The number of clusters requested exceeds the number of observations. There must be at least as many observations as clusters")
+            raise ValueError(
+                "The number of clusters requested exceeds the number of observations. There must be at least as many observations as clusters")
 
-        #-------------------------miscellaneous-------------------------
+
+    def fit(self, mat: np.ndarray):
+
+        #-------------------------process input-------------------------
+        self._inspect_matrix(mat)
+
         n = mat.shape[0]
+        self.m = mat.shape[1]
 
         #-------------------------assignment generation-------------------------
+
+        #NOTE: this method uses a 2d assignment array with ones and zeros to indicate which cluster each observation belongs to
 
         #generate initial assignments matrix and randomize the assignment of each observation
         cluster_assignments = np.zeros([n, self.k])
@@ -76,14 +87,12 @@ class KMeans:
 
         #-------------------------centroid calculation-------------------------
 
-        print(mat)
         k_eff = self.k
 
         for i in range(self.max_iter):
-            print(i)
-            print(cluster_assignments)
 
             #compute the centroid of each cluster
+            self.cluster_centers = []
 
             for k in range(k_eff):
                 # get elements of each cluster
@@ -103,11 +112,11 @@ class KMeans:
             cluster_assignments = np.zeros([n, k_eff])
             for x, e in enumerate(mat):
                 #calculate the distance from the data point to each [new] centroid
-                centroid_dists = [np.linalg.norm(e-self.cluster_centers[k]) for k in range(k_eff)]
+                centroid_dists = [np.linalg.norm(e-k) for k in self.cluster_centers]
                 #set the assignments variable in the column corresponding to that cluster to 1
                 cluster_assignments[x][centroid_dists.index(min(centroid_dists))] = 1
 
-            print(self.cluster_centers)
+            #print(self.cluster_centers)
 
         """
         Fits the kmeans algorithm onto a provided 2D matrix.
@@ -125,6 +134,22 @@ class KMeans:
         """
 
     def predict(self, mat: np.ndarray) -> np.ndarray:
+
+        self._inspect_matrix(mat)
+
+        if mat.shape[1] != self.m:
+            raise ValueError(f"Input has {mat.shape[1]} observations per feature, but model was fit with {self.m}.\n Fitting and prediction must have the same number of observations per feature.")
+
+        #note that a 1d array of [integer] cluster assignments is used here
+        cluster_assignments = []
+        for x, e in enumerate(mat):
+            # calculate the distance from the data point to each [new] centroid
+            centroid_dists = [np.linalg.norm(e - k) for k in self.cluster_centers]
+            # set the assignments variable in the column corresponding to that cluster to 1
+            cluster_assignments.append(centroid_dists.index(min(centroid_dists)))
+
+        return cluster_assignments
+
         """
         Predicts the cluster labels for a provided matrix of data points--
             question: what sorts of data inputs here would prevent the code from running?
@@ -152,6 +177,9 @@ class KMeans:
         """
 
     def get_centroids(self) -> np.ndarray:
+
+        return np.stack(self.cluster_centers)
+
         """
         Returns the centroid locations of the fit model.
 
@@ -163,3 +191,5 @@ class KMeans:
 
 km = KMeans(4, .5, 3)
 km.fit(np.random.rand(10,2))
+print(km.predict(np.random.rand(10,2)))
+print(km.get_centroids())

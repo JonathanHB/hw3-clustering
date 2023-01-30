@@ -104,7 +104,8 @@ def plot_multipanel(
             mat[:,0],
             mat[:,1],
             c=cvars[idx],
-            cmap=cmaps[idx])
+            cmap=cmaps[idx],
+            s=10)
         ax.set_title(names[idx])
         if idx == 2:
             plt.colorbar(sub, ax=ax)

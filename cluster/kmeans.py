@@ -4,7 +4,34 @@ from scipy.spatial.distance import cdist
 
 
 class KMeans:
+
+    def _check_numerical(self, x, req_int=True, req_nonzero = True):
+
+        #check datatype
+
+        if req_int:
+            if not isinstance(x, int):
+                #note that this does not inspect the numerical value of the input, so 1.00 would fail
+                raise ValueError("input must be an integer")
+        else:
+            if not isinstance(x, float):
+                raise ValueError("input must be a floating point number")
+
+        #check value
+        if req_nonzero:
+            if x <= 0:
+                raise ValueError("input must be positive")
+        else:
+            if x < 0:
+                raise ValueError("input must be non-negative")
+
+
     def __init__(self, k: int, tol: float = 1e-6, max_iter: int = 100):
+
+        #check for valid inputs
+        self._check_numerical(k)
+        self._check_numerical(tol, req_int = False, req_nonzero=False)
+        self._check_numerical(max_iter)
 
         self.k = k
         self.tol = tol
@@ -13,6 +40,8 @@ class KMeans:
         #store the cluster centers found by fit()
         self.cluster_centers = []
         self.m = 0
+        self.fit_mat = np.array(0)
+        self.fit_mat_labels = []
 
 
         """
@@ -43,6 +72,11 @@ class KMeans:
             raise ValueError(
                 f"input matrix had {len(mat.shape)} dimensions.\n Input must be a 2D matrix where the rows are observations and columns are features")
 
+        #check for empty matrices
+        if mat.shape[0] == 0:
+            raise ValueError(
+                "No observations were provided. A non-empty input matrix is required.")
+
         #check for sufficient number of observations
         if mat.shape[0] < self.k:
             raise ValueError(
@@ -52,6 +86,7 @@ class KMeans:
     def fit(self, mat: np.ndarray):
 
         #-------------------------process input-------------------------
+        #check for correct input datatype and structure and a reasonable k and n
         self._inspect_matrix(mat)
 
         n = mat.shape[0]
@@ -104,6 +139,7 @@ class KMeans:
                     self.cluster_centers.append(np.mean(np.stack(ke), axis=0))
                 else:
                     #if no points are assigned to a cluster, reduce the cluster number
+                    print("No points were assigned to one of the clusters; reducing k by 1.")
                     k_eff -= 1
 
 
@@ -117,6 +153,8 @@ class KMeans:
                 cluster_assignments[x][centroid_dists.index(min(centroid_dists))] = 1
 
             #print(self.cluster_centers)
+
+        self.fit_mat_labels = cluster_assignments
 
         """
         Fits the kmeans algorithm onto a provided 2D matrix.
@@ -187,9 +225,27 @@ class KMeans:
             np.ndarray
                 a `k x m` 2D matrix representing the cluster centroids of the fit model
         """
+def clustering_test():
+    import utils
+    cl_in = utils.make_clusters(seed = 0)
+    print(type(cl_in[1]))
+    km = KMeans(3, .5, 90)
 
+    km.fit(cl_in[0])
 
-km = KMeans(4, .5, 3)
-km.fit(np.random.rand(10,2))
-print(km.predict(np.random.rand(10,2)))
-print(km.get_centroids())
+    centroids = km.get_centroids()
+    ncentroids = centroids.shape[0]
+
+    predlabels = km.predict(cl_in[0])
+
+    plotpoints = np.concatenate([cl_in[0], centroids])
+    truelanels_c = np.concatenate([cl_in[1], [ncentroids]*ncentroids])
+    predlabels_c = np.concatenate([predlabels, [ncentroids]*ncentroids])
+
+    utils.plot_multipanel(
+            plotpoints,
+            truelanels_c,
+            predlabels_c,
+            np.ones(cl_in[0].shape[0]+ncentroids))
+
+clustering_test()

@@ -121,6 +121,9 @@ class KMeans:
             if i not in preassigned_inds:
                 cluster_assignments[i][np.random.randint(0,self.k)] = 1
 
+        #calculate initial error; used for tolerance check below
+        #self.fit_mat_labels = cluster_assignments
+
         #-------------------------centroid calculation-------------------------
 
         k_eff = self.k
@@ -143,7 +146,6 @@ class KMeans:
                     print("No points were assigned to one of the clusters; reducing k by 1.")
                     k_eff -= 1
 
-
             #reassign each observation to a new cluster
 
             cluster_assignments = np.zeros([n, k_eff])
@@ -155,7 +157,23 @@ class KMeans:
 
             #print(self.cluster_centers)
 
-        self.fit_mat_labels = cluster_assignments
+            self.fit_mat_labels = cluster_assignments
+
+            err_i = self.get_error()
+
+            #don't reference the undefined last error in the initial round
+            if i == 0:
+                self.last_error = err_i
+                continue
+
+            delta_error = self.last_error-err_i
+            self.last_error = err_i
+
+            if delta_error <= self.tol:
+                print(f"Terminating after {i} iterations as error change of {delta_error} is below tolerance.")
+                return
+
+        print(f"Terminating after maximum {self.max_iter} iterations")
 
         """
         Fits the kmeans algorithm onto a provided 2D matrix.

@@ -151,7 +151,7 @@ class KMeans:
             cluster_assignments = np.zeros([n, k_eff])
             for x, e in enumerate(mat):
                 #calculate the distance from the data point to each [new] centroid
-                centroid_dists = [np.linalg.norm(e-k) for k in self.cluster_centers]
+                centroid_dists = [np.dot(e - k, e - k) for k in self.cluster_centers]
                 #set the assignments variable in the column corresponding to that cluster to 1
                 cluster_assignments[x][centroid_dists.index(min(centroid_dists))] = 1
 
@@ -160,7 +160,7 @@ class KMeans:
             self.fit_mat_labels = cluster_assignments
 
             err_i = self.get_error()
-
+            #print(err_i)
             #don't reference the undefined last error in the initial round
             if i == 0:
                 self.last_error = err_i
@@ -168,6 +168,8 @@ class KMeans:
 
             delta_error = self.last_error-err_i
             self.last_error = err_i
+
+            print(delta_error)
 
             if delta_error <= self.tol:
                 print(f"Terminating after {i} iterations as error change of {delta_error} is below tolerance.")
@@ -201,7 +203,7 @@ class KMeans:
         cluster_assignments = []
         for x, e in enumerate(mat):
             # calculate the distance from the data point to each [new] centroid
-            centroid_dists = [np.linalg.norm(e - k) for k in self.cluster_centers]
+            centroid_dists = [np.dot(e - k, e - k) for k in self.cluster_centers]
             # set the assignments variable in the column corresponding to that cluster to 1
             cluster_assignments.append(centroid_dists.index(min(centroid_dists)))
 
@@ -229,7 +231,7 @@ class KMeans:
 
         for x, e in enumerate(self.fit_mat):
             # calculate the distance from the data point to each [new] centroid
-            centroid_dists = [np.linalg.norm(e - k) for k in self.cluster_centers]
+            centroid_dists = [np.dot(e - k, e - k) for k in self.cluster_centers]
             # set the assignments variable in the column corresponding to that cluster to 1
             total_sme += min(centroid_dists)
 
@@ -258,7 +260,7 @@ class KMeans:
 def clustering_test():
     import utils
     cl_in = utils.make_clusters(seed = 0)
-    km = KMeans(3, .5, 90)
+    km = KMeans(3, .0005, 90)
 
     km.fit(cl_in[0])
 

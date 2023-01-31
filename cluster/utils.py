@@ -94,7 +94,7 @@ def plot_multipanel(
             an optional value to save a figure to a file
     """
 
-    fig, axs = plt.subplots(1, 3, figsize=(9,3), dpi=200)
+    fig, axs = plt.subplots(1, 3, figsize=(9, 2.7), dpi=200)
     
     cvars = [truth, pred, score]
     names = ["True Cluster Labels", "Predicted Cluster Labels", "Silhouette Scores"]
@@ -105,8 +105,12 @@ def plot_multipanel(
             mat[:,1],
             c=cvars[idx],
             cmap=cmaps[idx],
-            s=10)
+            s=5)
         ax.set_title(names[idx])
+        min_lim = np.min(mat)
+        max_lim = np.max(mat)
+        ax.set_xlim([min_lim, max_lim])
+        ax.set_ylim([min_lim, max_lim])
         if idx == 2:
             plt.colorbar(sub, ax=ax)
     
@@ -116,3 +120,25 @@ def plot_multipanel(
     else:
         plt.show()
 
+#added by JHB
+#check observation/feature matrices
+def _inspect_matrix(mat: np.ndarray, n_min=0, n_dims=2):
+
+    #check input type
+    if type(mat) != np.ndarray:  # isinstance(mat, np.ndarray): #isinstance does not work
+        raise ValueError("Input must be a numpy array.")
+
+    #check matrix dimensionality
+    if len(mat.shape) != n_dims:
+        raise ValueError(
+            f"input matrix had {len(mat.shape)} dimensions.\n Input must be a 2D matrix where the rows are observations and columns are features")
+
+    #check for empty matrices
+    if mat.shape[0] == 0:
+        raise ValueError(
+            "No observations were provided. A non-empty input matrix is required.")
+
+    #check for sufficient number of observations
+    if mat.shape[0] < n_min:
+        raise ValueError(
+            "The number of clusters requested exceeds the number of observations. There must be at least as many observations as clusters")

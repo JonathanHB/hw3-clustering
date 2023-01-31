@@ -1,7 +1,8 @@
 import numpy as np
 import random
 from scipy.spatial.distance import cdist
-
+import cluster
+import cluster.utils as cu
 
 class KMeans:
 
@@ -61,33 +62,12 @@ class KMeans:
                 the maximum number of iterations before quitting model fit
         """
 
-    def _inspect_matrix(self, mat: np.ndarray):
-
-        #check input type
-        if type(mat) != np.ndarray:  # isinstance(mat, np.ndarray): #isinstance does not work
-            raise ValueError("Input must be a numpy array.")
-
-        #check matrix dimensionality
-        if len(mat.shape) != 2:
-            raise ValueError(
-                f"input matrix had {len(mat.shape)} dimensions.\n Input must be a 2D matrix where the rows are observations and columns are features")
-
-        #check for empty matrices
-        if mat.shape[0] == 0:
-            raise ValueError(
-                "No observations were provided. A non-empty input matrix is required.")
-
-        #check for sufficient number of observations
-        if mat.shape[0] < self.k:
-            raise ValueError(
-                "The number of clusters requested exceeds the number of observations. There must be at least as many observations as clusters")
-
-
-    def fit(self, mat: np.ndarray):
+    #the seed argument is for unit testing
+    def fit(self, mat: np.ndarray, seed=False):
 
         #-------------------------process input-------------------------
         #check for correct input datatype and structure and a reasonable k and n
-        self._inspect_matrix(mat)
+        cu._inspect_matrix(mat=mat, n_min=self.k, n_dims=2)
 
         n = mat.shape[0]
         self.m = mat.shape[1]
@@ -105,21 +85,28 @@ class KMeans:
         #If n is small or k is close to n, clustering should not be performed at all (or k should be reduced).
         #It was nevertheless necessary to make the code robust in this case.
 
-        #assign one randomly chosen data point to each cluster so that no cluster is empty
-        preassigned_inds = []
-        for k in range(self.k):
-            a = True
-            while a:
-                j = np.random.randint(0,n)
-                if j not in preassigned_inds:
-                    cluster_assignments[j][k] = 1
-                    preassigned_inds.append(j)
-                    a = False
+        #assign one randomly chosen data point to each cluster so that no cluster begins empty
+        #if multiple clusters started empty their cluster centers would pile up at the origin and
+        # data points near them might subsequently have multiple equally close cluster centers
 
-        #randomly assign all other data points to clusters
+        # preassigned_inds = []
+        # for k in range(self.k):
+        #     a = True
+        #     while a:
+        #         j = np.random.randint(0,n)
+        #         if j not in preassigned_inds:
+        #             cluster_assignments[j][k] = 1
+        #             preassigned_inds.append(j)
+        #             a = False
+
+        #randomly assign data points to clusters
+        #predictable output for unit testing
+        if seed:
+            np.random.seed(0)
+
         for i in range(n):
-            if i not in preassigned_inds:
-                cluster_assignments[i][np.random.randint(0,self.k)] = 1
+            #if i not in preassigned_inds:
+            cluster_assignments[i][np.random.randint(0,self.k)] = 1
 
         #calculate initial error; used for tolerance check below
         #self.fit_mat_labels = cluster_assignments
@@ -150,6 +137,8 @@ class KMeans:
 
             #reassign each observation to a new cluster
 
+            #this loop has some redundancy with the contents of get error; the two could be combined into
+            # an auxiliary method with some modification to make the code cleaner and faster
             cluster_assignments = np.zeros([n, self.k])
             for x, e in enumerate(mat):
                 #calculate the distance from the data point to each [new] centroid
@@ -157,11 +146,12 @@ class KMeans:
                 #set the assignments variable in the column corresponding to that cluster to 1
                 cluster_assignments[x][centroid_dists.index(min(centroid_dists))] = 1
 
-            #print(self.cluster_centers)
-
             self.fit_mat_labels = cluster_assignments
 
+            #check clustering error and compare change therein to tolerance to determine whether to terminate early
+
             err_i = self.get_error()
+
             #don't reference the undefined last error in the initial round
             if i == 0:
                 self.last_error = err_i
@@ -193,7 +183,7 @@ class KMeans:
 
     def predict(self, mat: np.ndarray) -> np.ndarray:
 
-        self._inspect_matrix(mat)
+        cu._inspect_matrix(mat=mat, n_min=self.k, n_dims=2)
 
         if mat.shape[1] != self.m:
             raise ValueError(f"Input has {mat.shape[1]} observations per feature, but model was fit with {self.m}.\n Fitting and prediction must have the same number of observations per feature.")
@@ -247,7 +237,7 @@ class KMeans:
 
     def get_centroids(self) -> np.ndarray:
 
-        return np.stack(self.cluster_centers)
+        return self.cluster_centers
 
         """
         Returns the centroid locations of the fit model.
@@ -256,27 +246,28 @@ class KMeans:
             np.ndarray
                 a `k x m` 2D matrix representing the cluster centroids of the fit model
         """
-def clustering_test():
-    import utils
-    cl_in = utils.make_clusters(k=5, seed = np.random.randint(0,128))
-    km = KMeans(5, .0005, 90)
 
-    km.fit(cl_in[0])
+def _clustering_test_plot(k, seed, kmseed):
+
+    cl_in = cu.make_clusters(k=k, seed = seed)
+    km = KMeans(k, .0005, 90)
+
+    km.fit(cl_in[0], kmseed)
 
     centroids = km.get_centroids()
-    ncentroids = centroids.shape[0]
     print(f"SME = {km.get_error()}")
 
     predlabels = km.predict(cl_in[0])
 
     plotpoints = np.concatenate([cl_in[0], centroids])
-    truelanels_c = np.concatenate([cl_in[1], [ncentroids]*ncentroids])
-    predlabels_c = np.concatenate([predlabels, [ncentroids]*ncentroids])
+    truelanels_c = np.concatenate([cl_in[1], [k]*k])
+    predlabels_c = np.concatenate([predlabels, [k]*k])
 
-    utils.plot_multipanel(
+    cu.plot_multipanel(
             plotpoints,
             truelanels_c,
             predlabels_c,
-            np.ones(cl_in[0].shape[0]+ncentroids))
+            np.ones(cl_in[0].shape[0]+k))
 
-clustering_test()
+#_clustering_test_plot(5, 16, True)
+

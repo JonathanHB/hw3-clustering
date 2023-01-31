@@ -1,5 +1,7 @@
 import numpy as np
 from scipy.spatial.distance import cdist
+import cluster
+import cluster.utils as utils
 
 
 class Silhouette:
@@ -10,6 +12,13 @@ class Silhouette:
         """
 
     def score(self, X: np.ndarray, y: np.ndarray) -> np.ndarray:
+
+        #check input data structure
+        utils._inspect_matrix(0, X)
+
+
+
+
         """
         calculates the silhouette score for each of the observations
 

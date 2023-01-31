@@ -30,7 +30,7 @@ class KMeans:
 
         #check for valid inputs
         self._check_numerical(k)
-        self._check_numerical(tol, req_int = False, req_nonzero=False)
+        self._check_numerical(tol, req_int=False, req_nonzero=False)
         self._check_numerical(max_iter)
 
         self.k = k
@@ -38,7 +38,7 @@ class KMeans:
         self.max_iter = max_iter
 
         #store the cluster centers found by fit()
-        self.cluster_centers = []
+        self.cluster_centers = np.zeros([k, 2])
         self.m = 0
         self.fit_mat = np.array(0)
         self.fit_mat_labels = []
@@ -126,32 +126,34 @@ class KMeans:
 
         #-------------------------centroid calculation-------------------------
 
-        k_eff = self.k
+        #k_eff = self.k
 
         for i in range(self.max_iter):
 
             #compute the centroid of each cluster
-            self.cluster_centers = []
+            #self.cluster_centers = []
 
-            for k in range(k_eff):
+            for k in range(self.k):
                 # get elements of each cluster
                 ke = [e for x, e in enumerate(mat) if cluster_assignments[x][k] == 1]
 
                 #print(ke)
 
                 if len(ke) != 0:
-                    self.cluster_centers.append(np.mean(np.stack(ke), axis=0))
+                    cctr = np.mean(np.stack(ke), axis=0)
+                    self.cluster_centers[k][0] = cctr[0]
+                    self.cluster_centers[k][1] = cctr[1]
                 else:
                     #if no points are assigned to a cluster, reduce the cluster number
-                    print("No points were assigned to one of the clusters; reducing k by 1.")
-                    k_eff -= 1
+                    print(f"No points were assigned to cluster {k}; cluster center will not move.")
+
 
             #reassign each observation to a new cluster
 
-            cluster_assignments = np.zeros([n, k_eff])
+            cluster_assignments = np.zeros([n, self.k])
             for x, e in enumerate(mat):
                 #calculate the distance from the data point to each [new] centroid
-                centroid_dists = [np.dot(e - k, e - k) for k in self.cluster_centers]
+                centroid_dists = [np.dot(e - kc, e - kc) for kc in self.cluster_centers]
                 #set the assignments variable in the column corresponding to that cluster to 1
                 cluster_assignments[x][centroid_dists.index(min(centroid_dists))] = 1
 
@@ -160,7 +162,6 @@ class KMeans:
             self.fit_mat_labels = cluster_assignments
 
             err_i = self.get_error()
-            #print(err_i)
             #don't reference the undefined last error in the initial round
             if i == 0:
                 self.last_error = err_i
@@ -168,8 +169,6 @@ class KMeans:
 
             delta_error = self.last_error-err_i
             self.last_error = err_i
-
-            print(delta_error)
 
             if delta_error <= self.tol:
                 print(f"Terminating after {i} iterations as error change of {delta_error} is below tolerance.")
@@ -259,8 +258,8 @@ class KMeans:
         """
 def clustering_test():
     import utils
-    cl_in = utils.make_clusters(seed = 0)
-    km = KMeans(3, .0005, 90)
+    cl_in = utils.make_clusters(k=5, seed = np.random.randint(0,128))
+    km = KMeans(5, .0005, 90)
 
     km.fit(cl_in[0])
 

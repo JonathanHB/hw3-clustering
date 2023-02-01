@@ -6,33 +6,7 @@ from sklearn import cluster as skcl
 import cluster.utils as cu
 import cluster.kmeans as km
 
-# def _clustering_test(k, cl_in, kmseed, tol, max_iter):
-#
-#     kme = km.KMeans(k, tol, max_iter)
-#
-#     kme.fit(cl_in[0], kmseed)
-#
-#     centroids = kme.get_centroids()
-#     #print(f"SME = {km.get_error()}")
-#
-#     # predlabels = km.predict(cl_in[0])
-#
-#     # plotpoints = np.concatenate([cl_in[0], centroids])
-#     # truelanels_c = np.concatenate([cl_in[1], [k]*k])
-#     # predlabels_c = np.concatenate([predlabels, [k]*k])
-#
-#     # utils.plot_multipanel(
-#     #         plotpoints,
-#     #         truelanels_c,
-#     #         predlabels_c,
-#     #         np.ones(cl_in[0].shape[0]+k))
-#
-#     return [centroids, kme.get_error()]
-
 def test_kmean_centroids():
-
-    #assert 1 == 1
-    #assert 2+2 == 5
 
     #parameters for test data
     n=500
@@ -69,8 +43,3 @@ def test_kmean_centroids():
         assert abs(true_sorted[x][0] - pred_sorted[x][0]) < floating_point_tolerance
         assert abs(true_sorted[x][1] - pred_sorted[x][1]) < floating_point_tolerance
 
-
-
-
-
-test_kmean_centroids()

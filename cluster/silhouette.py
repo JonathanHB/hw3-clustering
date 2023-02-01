@@ -104,5 +104,5 @@ def _clustering_test_plot(k, seed, kmseed):
             predlabels_c,
             silscore)
 
-_clustering_test_plot(5, 16, True)
+#_clustering_test_plot(5, 16, True)
 

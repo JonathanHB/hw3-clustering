@@ -2,7 +2,7 @@ import numpy as np
 from scipy.spatial.distance import cdist
 import cluster
 import cluster.utils as utils
-import kmeans
+import cluster.kmeans as kmeans
 
 
 class Silhouette:
@@ -18,14 +18,13 @@ class Silhouette:
         utils._inspect_matrix(X, 0, 2)
         utils._inspect_matrix(y, 0, 1)
 
-
         n = X.shape[0]
 
         #construct distance matrix (very inefficiently)
         distances = np.ndarray([n,n])
         for i, xi in enumerate(X):
             for j, xj in enumerate(X):
-                distances[i][j] = np.dot(xi-xj, xi-xj)
+                distances[i][j] = np.linalg.norm(xi-xj)
 
         #calculate silhouette scores
         sscores = []
@@ -35,77 +34,34 @@ class Silhouette:
 
             #collect distances across the ith row
             intradists = [j for x, j in enumerate(distances[i]) if (y[x] == y[i] and x != i)]
-            # #collect distances down the ith column
-            # if i == 0:
-            #     intradists2 = []
-            # elif i == 1:
-            #     if y[0] == y[i]:
-            #         intradists2 = [distances[0][i]]
-            #     else:
-            #         intradists2 = []
-            # else:
-            #     #print(distances[0:i,i])
-            #     intradists2 = [j for x, j in enumerate(distances[0:i,i]) if y[x] == y[i]]
-            #
-            # intradists = intradists1+intradists2
 
-            #print(len(intradists1))
-            print(len(intradists))
-            #print(n)
-            #assert len(intradists) == n/5-1, "wrong intradists"
             cluster_size = len(intradists)
             intradist_sum = sum(intradists)
 
             ai = intradist_sum/(cluster_size-1)
-            #print(ai)
 
             #inter-cluster
 
-            #collect distances across the ith row
-            interdists = [j for x, j in enumerate(distances[i]) if y[x] != y[i]]
-            #collect distances down the ith column
-            # if i == 0:
-            #     interdists2 = []
-            # elif i == 1:
-            #     if y[0] != y[i]:
-            #         interdists2 = [distances[0][i]]
-            #     else:
-            #         interdists2 = []
-            # else:
-            #     interdists2 = [j for x, j in enumerate(distances[0:i,i]) if y[x] != y[i]]
+            intercluster_sscores = []
+            for cl in np.unique(y):
+                #skip this point's own cluster
+                if cl != y[i]:
+                    #collect distances across the ith row
+                    interdists = [j for x, j in enumerate(distances[i]) if y[x] == cl]
 
-            # if i != 0:
-            #     interdists2 = [j for x, j in enumerate(distances[0:i][i]) if y[x] != y[i]]
-            # else:
-            #     interdists2 = []
+                    noncluster_size = len(interdists)
+                    interdist_sum = sum(interdists)
 
-            #interdists = interdists1+interdists2
+                    bi = interdist_sum/noncluster_size
 
-            #print(len(interdists))
-            #assert len(interdists) == 4*n/5, "wrong interdists"
+                    si = (bi-ai)/max(ai, bi)
 
-            noncluster_size = len(interdists)
-            interdist_sum = sum(interdists)
+                    intercluster_sscores.append(si)
 
-            bi = interdist_sum/noncluster_size
-            #print(bi)
-
-            #print(max(ai, bi))
-            si = (bi-ai)/max(ai, bi)
-
-            sscores.append(si)
+            sscores.append(min(intercluster_sscores))
 
         return sscores
 
-
-
-        #print(distances)
-
-        # if np.dot(xi-xj, xi-xj) == 0:
-        #     print(i)
-        #     print(j+i)
-        #     print(xi)
-        #     print(xj)
 
         """
         calculates the silhouette score for each of the observations
@@ -122,6 +78,7 @@ class Silhouette:
                 a 1D array with the silhouette scores for each of the observations in `X`
         """
 
+#plotting method for graphical inspection
 def _clustering_test_plot(k, seed, kmseed):
 
     cl_in = utils.make_clusters(k=k, seed = seed)

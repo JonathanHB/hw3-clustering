@@ -132,7 +132,7 @@ class KMeans:
                     self.cluster_centers[k][1] = cctr[1]
                 else:
                     #if no points are assigned to a cluster, reduce the cluster number
-                    print(f"No points were assigned to cluster {k}; cluster center will not move.")
+                    print(f"\nNo points were assigned to cluster {k}; cluster center will not move.")
 
 
             #reassign each observation to a new cluster
@@ -161,10 +161,10 @@ class KMeans:
             self.last_error = err_i
 
             if delta_error <= self.tol:
-                print(f"Terminating after {i} iterations as error change of {delta_error} is below tolerance.")
+                print(f"\nTerminating after {i} iterations as error change of {delta_error} is below tolerance.")
                 return
 
-        print(f"Terminating after maximum {self.max_iter} iterations")
+        print(f"\nTerminating after maximum {self.max_iter} iterations")
 
         """
         Fits the kmeans algorithm onto a provided 2D matrix.
@@ -247,6 +247,7 @@ class KMeans:
                 a `k x m` 2D matrix representing the cluster centroids of the fit model
         """
 
+#plotting method for graphical inspection
 def _clustering_test_plot(k, seed, kmseed):
 
     cl_in = cu.make_clusters(k=k, seed = seed)

@@ -29,9 +29,9 @@ import cluster.kmeans as km
 #
 #     return [centroids, kme.get_error()]
 
-def test_kmeans_centroids():
+def test_kmean_centroids():
 
-    assert 1 == 1
+    #assert 1 == 1
     #assert 2+2 == 5
 
     #parameters for test data
@@ -48,19 +48,29 @@ def test_kmeans_centroids():
     #test_output = _clustering_test(5, cl_in, True)
     kme = km.KMeans(k, tol, max_iter)
     kme.fit(cl_in, True)
-    print(kme.get_centroids())
 
     #cluster test data with scipy
     true_output = skcl.KMeans(n_clusters=k, init='random', max_iter=max_iter, tol=tol).fit(cl_in)
 
-    print(true_output.cluster_centers_)
-
-    print(kme.get_error())
-    print(true_output.inertia_/n)
+    #print(kme.get_error())
+    #print(true_output.inertia_/n)
 
     #check that the fits are equally good
-    floating_point_tolerance = 0.000000001
+    floating_point_tolerance = 0.0000001
     assert kme.get_error() - true_output.inertia_/n < floating_point_tolerance, f"local method's clustering MSE of {kme.get_error()} does not match scipy's MSE of {true_output.inertia_/n}"
 
+    tcs = true_output.cluster_centers_
+    true_sorted = tcs[tcs[:, 0].argsort()]
 
-test_kmeans_centroids()
+    pcs = kme.get_centroids()
+    pred_sorted = pcs[pcs[:, 0].argsort()]
+
+    for x in range(true_sorted.shape[0]):
+        assert abs(true_sorted[x][0] - pred_sorted[x][0]) < floating_point_tolerance
+        assert abs(true_sorted[x][1] - pred_sorted[x][1]) < floating_point_tolerance
+
+
+
+
+
+test_kmean_centroids()

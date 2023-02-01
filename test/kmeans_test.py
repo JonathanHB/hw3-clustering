@@ -2,7 +2,8 @@
 import pytest
 import numpy as np
 import sklearn
-from sklearn import cluster as skcl
+#from sklearn import cluster as skcl
+import sklearn.cluster as skcl
 import cluster.utils as cu
 import cluster.kmeans as km
 import cluster.silhouette as sil

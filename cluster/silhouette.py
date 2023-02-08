@@ -38,7 +38,7 @@ class Silhouette:
             cluster_size = len(intradists)
             intradist_sum = sum(intradists)
 
-            ai = intradist_sum/(cluster_size-1)
+            ai = intradist_sum/cluster_size
 
             #inter-cluster
 
